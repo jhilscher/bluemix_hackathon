@@ -27,12 +27,23 @@ var logger = require('morgan');
 var errorHandler = require('errorhandler');
 var multipart = require('connect-multiparty')
 var multipartMiddleware = multipart();
+var exphbs  = require('express-handlebars');
+
+
 
 // all environments
 app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
-app.engine('html', require('ejs').renderFile);
+//app.set('view engine', 'ejs');
+//app.engine('html', require('ejs').renderFile);
+
+app.engine('html', exphbs({
+    defaultLayout: 'main',
+    extname: '.html',
+    partialsDir: 'views/partials/'
+    }));
+app.set('view engine', 'html');
+
 app.use(logger('dev'));
 app.use(bodyParser.urlencoded({
     extended: true
@@ -68,7 +79,7 @@ function initDBConnection() {
         // Alternately you could point to a local database here instead of a
         // Bluemix service.
         // url will be in this format: https://username:password@xxxxxxxxx-bluemix.cloudant.com
-        dbCredentials.url = "REPLACE ME";
+        dbCredentials.url = "https://bde58a30-4ac1-42f3-b04d-3194997bd04f-bluemix:3fbae30f3d50ba7fe3113bc976bcc180cc6535d820049fc62915d3038bede7e2@bde58a30-4ac1-42f3-b04d-3194997bd04f-bluemix.cloudant.com";
     }
 
     cloudant = require('cloudant')(dbCredentials.url);
@@ -85,7 +96,11 @@ function initDBConnection() {
 
 initDBConnection();
 
+/* Routing */
+
 app.get('/', routes.index);
+
+
 
 function createResponseData(id, name, value, attachments) {
 

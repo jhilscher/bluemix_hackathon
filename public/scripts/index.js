@@ -1,4 +1,11 @@
 // index.js
+$.ready(function() {
+
+  
+
+});
+
+
 
 var REST_DATA = 'api/favorites';
 var KEY_ENTER = 13;

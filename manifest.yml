@@ -1,0 +1,11 @@
+applications:
+- path: .
+  memory: 512M
+  instances: 1
+  domain: eu-gb.mybluemix.net
+  name: nodejs-app-shks
+  host: nodejs-app-shks
+  disk_quota: 1024M
+  services:
+  - nodejs-app-shks-cloudantNoSQLDB
+  - availability-monitoring-auto

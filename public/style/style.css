@@ -31,14 +31,7 @@ header, footer {
 }
 
 /* positions */
-header {
-	padding-top: 20px;
-	font-size: 1.3em;
-}
-footer {
-	padding: 10px;
-	font-size: .8rem;
-}
+
 .title, .tips {
 	height: 30px;
 	padding-top: 20px;

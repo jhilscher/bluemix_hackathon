@@ -11,6 +11,8 @@ body,html {
 	color: #283D56;
 }
 
+li {list-style-type: none;}
+
 /* header footer common */
 header, footer {
 	width: 100%;

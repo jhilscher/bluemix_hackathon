@@ -4,22 +4,17 @@
 
 var express = require('express'),
     routes = require('./routes'),
+    comment = require('./routes/comment'),
     user = require('./routes/user'),
+    dbService = require('./services/dbService'),
     http = require('http'),
     path = require('path'),
-    fs = require('fs');
+    fs = require('fs'),
+    moment = require('moment');
 
 var app = express();
 
-var db;
 
-var cloudant;
-
-var fileToUpload;
-
-var dbCredentials = {
-    dbName: 'my_sample_db'
-};
 
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
@@ -29,7 +24,22 @@ var multipart = require('connect-multiparty')
 var multipartMiddleware = multipart();
 var exphbs  = require('express-handlebars');
 
+var hbs = exphbs.create({
+    defaultLayout: 'main',
+    extname: '.html',
+    partialsDir: ['views/partials/', 'views/templates/'],
+    helpers: {
+        dateFormat: function(context, block) {
+            var f = block.hash.format || "DD.MM.YYYY HH:mm:ss";
+            return moment(context).format(f);
+        }
+    }
+});
 
+// hbs.registerHelper('dateFormat', function(context, block) {
+//     var f = block.hash.format || "MMM DD, YYYY hh:mm:ss A";
+//     return moment(context).format(f);
+// });
 
 // all environments
 app.set('port', process.env.PORT || 3000);
@@ -37,12 +47,11 @@ app.set('views', __dirname + '/views');
 //app.set('view engine', 'ejs');
 //app.engine('html', require('ejs').renderFile);
 
-app.engine('html', exphbs({
-    defaultLayout: 'main',
-    extname: '.html',
-    partialsDir: 'views/partials/'
-    }));
+app.engine('html', hbs.engine);
 app.set('view engine', 'html');
+
+
+
 
 app.use(logger('dev'));
 app.use(bodyParser.urlencoded({
@@ -58,49 +67,19 @@ if ('development' == app.get('env')) {
     app.use(errorHandler());
 }
 
-function initDBConnection() {
-    //When running on Bluemix, this variable will be set to a json object
-    //containing all the service credentials of all the bound services
-    if (process.env.VCAP_SERVICES) {
-        var vcapServices = JSON.parse(process.env.VCAP_SERVICES);
-        // Pattern match to find the first instance of a Cloudant service in
-        // VCAP_SERVICES. If you know your service key, you can access the
-        // service credentials directly by using the vcapServices object.
-        for (var vcapService in vcapServices) {
-            if (vcapService.match(/cloudant/i)) {
-                dbCredentials.url = vcapServices[vcapService][0].credentials.url;
-            }
-        }
-    } else { //When running locally, the VCAP_SERVICES will not be set
-
-        // When running this app locally you can get your Cloudant credentials
-        // from Bluemix (VCAP_SERVICES in "cf env" output or the Environment
-        // Variables section for an app in the Bluemix console dashboard).
-        // Alternately you could point to a local database here instead of a
-        // Bluemix service.
-        // url will be in this format: https://username:password@xxxxxxxxx-bluemix.cloudant.com
-        dbCredentials.url = "https://bde58a30-4ac1-42f3-b04d-3194997bd04f-bluemix:3fbae30f3d50ba7fe3113bc976bcc180cc6535d820049fc62915d3038bede7e2@bde58a30-4ac1-42f3-b04d-3194997bd04f-bluemix.cloudant.com";
-    }
-
-    cloudant = require('cloudant')(dbCredentials.url);
-
-    // check if DB exists if not create
-    cloudant.db.create(dbCredentials.dbName, function(err, res) {
-        if (err) {
-            console.log('Could not create new db: ' + dbCredentials.dbName + ', it might already exist.');
-        }
-    });
-
-    db = cloudant.use(dbCredentials.dbName);
-}
-
-initDBConnection();
+var db = dbService.db;
 
 /* Routing */
 
 app.get('/', routes.index);
 
+app.post('/api/insertComment', comment.insertComment);
 
+app.get('/api/getComments', comment.getComments);
+
+app.delete('/api/deleteComment', comment.deleteComment);
+
+app.post('/api/analyzeComment', comment.analyzeComment)
 
 function createResponseData(id, name, value, attachments) {
 
@@ -295,6 +274,11 @@ app.delete('/api/favorites', function(request, response) {
     var id = request.query.id;
     // var rev = request.query.rev; // Rev can be fetched from request. if
     // needed, send the rev from client
+    if (!id){
+        response.sendStatus(404);
+        return;
+    }
+
     console.log("Removing document of ID: " + id);
     console.log('Request Query: ' + JSON.stringify(request.query));
 
@@ -348,7 +332,7 @@ app.get('/api/favorites', function(request, response) {
 
     console.log("Get method invoked.. ")
 
-    db = cloudant.use(dbCredentials.dbName);
+    //db = cloudant.use(dbCredentials.dbName);
     var docList = [];
     var i = 0;
     db.list(function(err, body) {

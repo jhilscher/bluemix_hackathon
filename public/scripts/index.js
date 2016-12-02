@@ -1,294 +1,398 @@
 // index.js
-$.ready(function() {
 
-  
 
+var loadComments = function() {
+    
+        $.ajax({
+            type        : 'GET', 
+            url         : 'api/getComments'
+        })
+        .done(function(data) {
+            $('#commentsContainer').html(data);
+            console.info('success loading comments'); 
+        });
+
+    
+};
+
+var deleteComment = function(id) {
+
+        console.info("deleteComment %s", id);
+
+        var data = {
+            'id'  : id
+        };
+
+        $.ajax({
+            type  : 'DELETE', 
+            url   : 'api/deleteComment' + '?' + $.param({"id": id}), 
+        })
+        .done(function(data) {
+
+            console.info(data); 
+
+            loadComments();
+        }).fail(function(err) {
+            console.error(err);
+        });
+
+};
+
+var analyzeComment = function(id) {
+
+        console.info("anaylizeComment %s", id);
+
+        var data = {
+            'id'  : id
+        };
+
+        $.ajax({
+            type  : 'POST', 
+            url   : 'api/analyzeComment',
+            data  : data,
+            encode : true 
+        })
+        .done(function(data) {
+            var ele = $('#keywords-' + id);
+            ele.show();
+
+            var text = data.keywords.map(function(elem){
+                    return elem.text;
+                }).join(", ");
+            ele.html(text);
+
+            console.info(data); 
+
+        }).fail(function(err) {
+            console.error(err);
+        });
+
+};
+
+
+
+$(document).ready(function() {
+
+    console.info("jquery initializied");
+ 
+
+    // Comment abschicken
+    $('#commentform').submit(function(event) {
+
+        console.info("commentform submitted");
+
+        var data = {
+            'commenttext'  : $('#commentform textarea[name=commenttext]').val(),
+            'username' : $('#commentform input[name=username]').val(),
+        };
+
+        $.ajax({
+            type        : 'POST', 
+            url         : 'api/insertcomment', 
+            data        : data,
+            encode      : true
+        })
+        .done(function(data) {
+
+            console.info(data); 
+
+            loadComments();
+        }).fail(function(err) {
+            console.error(err);
+        });
+
+        event.preventDefault();
+    });
+
+
+    loadComments();
 });
 
 
 
-var REST_DATA = 'api/favorites';
-var KEY_ENTER = 13;
-var defaultItems = [
 
-];
+// var REST_DATA = 'api/favorites';
+// var KEY_ENTER = 13;
+// var defaultItems = [
 
-function loadItems() {
-    xhrGet(REST_DATA, function(data) {
+// ];
 
-        //stop showing loading message
-        stopLoadingMessage();
+// function loadItems() {
+//     xhrGet(REST_DATA, function(data) {
 
-        var receivedItems = data || [];
-        var items = [];
-        var i;
-        // Make sure the received items have correct format
-        for (i = 0; i < receivedItems.length; ++i) {
-            var item = receivedItems[i];
-            if (item && 'id' in item) {
-                items.push(item);
-            }
-        }
-        var hasItems = items.length;
-        if (!hasItems) {
-            items = defaultItems;
-        }
-        for (i = 0; i < items.length; ++i) {
-            addItem(items[i], !hasItems);
-        }
-        if (!hasItems) {
-            var table = document.getElementById('notes');
-            var nodes = [];
-            for (i = 0; i < table.rows.length; ++i) {
-                nodes.push(table.rows[i].firstChild.firstChild);
-            }
+//         //stop showing loading message
+//         stopLoadingMessage();
 
-            function save() {
-                if (nodes.length) {
-                    saveChange(nodes.shift(), save);
-                }
-            }
-            save();
-        }
-    }, function(err) {
-        console.error(err);
-    });
-}
+//         var receivedItems = data || [];
+//         var items = [];
+//         var i;
+//         // Make sure the received items have correct format
+//         for (i = 0; i < receivedItems.length; ++i) {
+//             var item = receivedItems[i];
+//             if (item && 'id' in item) {
+//                 items.push(item);
+//             }
+//         }
+//         var hasItems = items.length;
+//         if (!hasItems) {
+//             items = defaultItems;
+//         }
+//         for (i = 0; i < items.length; ++i) {
+//             addItem(items[i], !hasItems);
+//         }
+//         if (!hasItems) {
+//             var table = document.getElementById('notes');
+//             var nodes = [];
+//             for (i = 0; i < table.rows.length; ++i) {
+//                 nodes.push(table.rows[i].firstChild.firstChild);
+//             }
 
-function startProgressIndicator(row) {
-    row.innerHTML = "<td class='content'>Uploading file... <img height=\"50\" width=\"50\" src=\"images/loading.gif\"></img></td>";
-}
+//             function save() {
+//                 if (nodes.length) {
+//                     saveChange(nodes.shift(), save);
+//                 }
+//             }
+//             save();
+//         }
+//     }, function(err) {
+//         console.error(err);
+//     });
+// }
 
-function removeProgressIndicator(row) {
-    row.innerHTML = "<td class='content'>uploaded...</td>";
-}
+// function startProgressIndicator(row) {
+//     row.innerHTML = "<td class='content'>Uploading file... <img height=\"50\" width=\"50\" src=\"images/loading.gif\"></img></td>";
+// }
 
-function addNewRow(table) {
-    var newRow = document.createElement('tr');
-    table.appendChild(newRow);
-    return table.lastChild;
-}
+// function removeProgressIndicator(row) {
+//     row.innerHTML = "<td class='content'>uploaded...</td>";
+// }
 
-function uploadFile(node) {
+// function addNewRow(table) {
+//     var newRow = document.createElement('tr');
+//     table.appendChild(newRow);
+//     return table.lastChild;
+// }
 
-    var file = node.previousSibling.files[0];
+// function uploadFile(node) {
 
-    //if file not selected, throw error
-    if (!file) {
-        alert("File not selected for upload... \t\t\t\t \n\n - Choose a file to upload. \n - Then click on Upload button.");
-        return;
-    }
+//     var file = node.previousSibling.files[0];
 
-    var row = node.parentNode.parentNode.parentNode;
+//     //if file not selected, throw error
+//     if (!file) {
+//         alert("File not selected for upload... \t\t\t\t \n\n - Choose a file to upload. \n - Then click on Upload button.");
+//         return;
+//     }
 
-    var form = new FormData();
-    form.append("file", file);
+//     var row = node.parentNode.parentNode.parentNode;
 
-    var id = row.getAttribute('data-id');
+//     var form = new FormData();
+//     form.append("file", file);
 
-    var queryParams = "id=" + (id == null ? -1 : id);
-    queryParams += "&name=" + row.firstChild.firstChild.value;
-    queryParams += "&value=" + row.firstChild.nextSibling.firstChild.value;
+//     var id = row.getAttribute('data-id');
 
-
-    var table = row.firstChild.nextSibling.firstChild;
-    var newRow = addNewRow(table);
-
-    startProgressIndicator(newRow);
-
-    xhrAttach(REST_DATA + "/attach?" + queryParams, form, function(item) {
-        console.log('Item id - ' + item.id);
-        console.log('attached: ', item);
-        row.setAttribute('data-id', item.id);
-        removeProgressIndicator(row);
-        setRowContent(item, row);
-    }, function(err) {
-        console.error(err);
-    });
-
-}
-
-var attachButton = "<br><div class='uploadBox'><input type=\"file\" name=\"file\" id=\"upload_file\"><input width=\"100\" type=\"submit\" value=\"Upload\" onClick='uploadFile(this)'></div>";
-
-function setRowContent(item, row) {
-    var innerHTML = "<td class='contentName'><textarea id='nameText' class = 'nameText' onkeydown='onKey(event)'>" + item.name + "</textarea></td><td class='contentDetails'>";
-
-    var valueTextArea = "<textarea id='valText' onkeydown='onKey(event)' placeholder=\"Enter a description...\"></textarea>";
-    if (item.value) {
-        valueTextArea = "<textarea id='valText' onkeydown='onKey(event)'>" + item.value + "</textarea>";
-    }
-
-    innerHTML += valueTextArea;
+//     var queryParams = "id=" + (id == null ? -1 : id);
+//     queryParams += "&name=" + row.firstChild.firstChild.value;
+//     queryParams += "&value=" + row.firstChild.nextSibling.firstChild.value;
 
 
-    var attachments = item.attachements;
-    if (attachments && attachments.length > 0) {
-        innerHTML += "<div class='flexBox'>";
-        for (var i = 0; i < attachments.length; ++i) {
-            var attachment = attachments[i];
+//     var table = row.firstChild.nextSibling.firstChild;
+//     var newRow = addNewRow(table);
 
-            if (attachment.content_type.indexOf("image/") == 0) {
-                innerHTML += "<div class='contentTiles'>" + attachment.key + "<br><img height=\"150\" src=\"" + attachment.url + "\" onclick='window.open(\"" + attachment.url + "\")'></img></div>";
+//     startProgressIndicator(newRow);
 
-            } else if (attachment.content_type.indexOf("audio/") == 0) {
-                innerHTML += "<div class='contentTiles'>" + attachment.key + "<br><AUDIO  height=\"50\" src=\"" + attachment.url + "\" controls></AUDIO></div>";
+//     xhrAttach(REST_DATA + "/attach?" + queryParams, form, function(item) {
+//         console.log('Item id - ' + item.id);
+//         console.log('attached: ', item);
+//         row.setAttribute('data-id', item.id);
+//         removeProgressIndicator(row);
+//         setRowContent(item, row);
+//     }, function(err) {
+//         console.error(err);
+//     });
 
-            } else if (attachment.content_type.indexOf("video/") == 0) {
-                innerHTML += "<div class='contentTiles'>" + attachment.key + "<br><VIDEO  height=\"150\" src=\"" + attachment.url + "\" controls></VIDEO></div>";
+// }
 
-            } else if (attachment.content_type.indexOf("text/") == 0 || attachment.content_type.indexOf("application/") == 0) {
-                innerHTML += "<div class='contentTiles'><a href=\"" + attachment.url + "\" target=\"_blank\">" + attachment.key + "</a></div>";
-            }
+// var attachButton = "<br><div class='uploadBox'><input type=\"file\" name=\"file\" id=\"upload_file\"><input width=\"100\" type=\"submit\" value=\"Upload\" onClick='uploadFile(this)'></div>";
 
-        }
-        innerHTML += "</div>";
+// function setRowContent(item, row) {
+//     var innerHTML = "<td class='contentName'><textarea id='nameText' class = 'nameText' onkeydown='onKey(event)'>" + item.name + "</textarea></td><td class='contentDetails'>";
 
-    }
+//     var valueTextArea = "<textarea id='valText' onkeydown='onKey(event)' placeholder=\"Enter a description...\"></textarea>";
+//     if (item.value) {
+//         valueTextArea = "<textarea id='valText' onkeydown='onKey(event)'>" + item.value + "</textarea>";
+//     }
 
-    row.innerHTML = innerHTML + attachButton + "</td><td class = 'contentAction'><span class='deleteBtn' onclick='deleteItem(this)' title='delete me'></span></td>";
-
-}
-
-function addItem(item, isNew) {
-
-    var row = document.createElement('tr');
-    row.className = "tableRows";
-    var id = item && item.id;
-    if (id) {
-        row.setAttribute('data-id', id);
-    }
+//     innerHTML += valueTextArea;
 
 
+//     var attachments = item.attachements;
+//     if (attachments && attachments.length > 0) {
+//         innerHTML += "<div class='flexBox'>";
+//         for (var i = 0; i < attachments.length; ++i) {
+//             var attachment = attachments[i];
 
-    if (item) // if not a new row
-    {
-        setRowContent(item, row);
-    } else //if new row
-    {
-        row.innerHTML = "<td class='contentName'><textarea id='nameText' onkeydown='onKey(event)' placeholder=\"Enter a title for your favourites...\"></textarea></td><td class='contentDetails'><textarea id='valText'  onkeydown='onKey(event)' placeholder=\"Enter a description...\"></textarea>" + attachButton + "</td>" +
-            "<td class = 'contentAction'><span class='deleteBtn' onclick='deleteItem(this)' title='delete me'></span></td>";
-    }
+//             if (attachment.content_type.indexOf("image/") == 0) {
+//                 innerHTML += "<div class='contentTiles'>" + attachment.key + "<br><img height=\"150\" src=\"" + attachment.url + "\" onclick='window.open(\"" + attachment.url + "\")'></img></div>";
 
-    var table = document.getElementById('notes');
-    table.lastChild.appendChild(row);
-    row.isNew = !item || isNew;
+//             } else if (attachment.content_type.indexOf("audio/") == 0) {
+//                 innerHTML += "<div class='contentTiles'>" + attachment.key + "<br><AUDIO  height=\"50\" src=\"" + attachment.url + "\" controls></AUDIO></div>";
 
-    if (row.isNew) {
-        var textarea = row.firstChild.firstChild;
-        textarea.focus();
-    }
+//             } else if (attachment.content_type.indexOf("video/") == 0) {
+//                 innerHTML += "<div class='contentTiles'>" + attachment.key + "<br><VIDEO  height=\"150\" src=\"" + attachment.url + "\" controls></VIDEO></div>";
 
-}
+//             } else if (attachment.content_type.indexOf("text/") == 0 || attachment.content_type.indexOf("application/") == 0) {
+//                 innerHTML += "<div class='contentTiles'><a href=\"" + attachment.url + "\" target=\"_blank\">" + attachment.key + "</a></div>";
+//             }
 
-function deleteItem(deleteBtnNode) {
-    var row = deleteBtnNode.parentNode.parentNode;
-    var attribId = row.getAttribute('data-id');
-    if (attribId) {
-        xhrDelete(REST_DATA + '?id=' + row.getAttribute('data-id'), function() {
-            row.parentNode.removeChild(row);
-        }, function(err) {
-            console.error(err);
-        });
-    } else if (attribId == null) {
-        row.parentNode.removeChild(row);
-    }
-}
+//         }
+//         innerHTML += "</div>";
 
-function onKey(evt) {
+//     }
 
-    if (evt.keyCode == KEY_ENTER && !evt.shiftKey) {
+//     row.innerHTML = innerHTML + attachButton + "</td><td class = 'contentAction'><span class='deleteBtn' onclick='deleteItem(this)' title='delete me'></span></td>";
 
-        evt.stopPropagation();
-        evt.preventDefault();
-        var nameV, valueV;
-        var row;
+// }
 
-        if (evt.target.id == "nameText") {
-            row = evt.target.parentNode.parentNode;
-            nameV = evt.target.value;
-            valueV = row.firstChild.nextSibling.firstChild.value;
+// function addItem(item, isNew) {
 
-        } else {
-            row = evt.target.parentNode.parentNode;
-            nameV = row.firstChild.firstChild.value;
-            valueV = evt.target.value;
-        }
-
-        var data = {
-            name: nameV,
-            value: valueV
-        };
-
-        if (row.isNew) {
-            delete row.isNew;
-            xhrPost(REST_DATA, data, function(item) {
-                row.setAttribute('data-id', item.id);
-            }, function(err) {
-                console.error(err);
-            });
-        } else {
-            data.id = row.getAttribute('data-id');
-            xhrPut(REST_DATA, data, function() {
-                console.log('updated: ', data);
-            }, function(err) {
-                console.error(err);
-            });
-        }
+//     var row = document.createElement('tr');
+//     row.className = "tableRows";
+//     var id = item && item.id;
+//     if (id) {
+//         row.setAttribute('data-id', id);
+//     }
 
 
-        if (row.nextSibling) {
-            row.nextSibling.firstChild.firstChild.focus();
-        } else {
-            addItem();
-        }
-    }
-}
 
-function saveChange(contentNode, callback) {
-    var row = contentNode.parentNode.parentNode;
+//     if (item) // if not a new row
+//     {
+//         setRowContent(item, row);
+//     } else //if new row
+//     {
+//         row.innerHTML = "<td class='contentName'><textarea id='nameText' onkeydown='onKey(event)' placeholder=\"Enter a title for your favourites...\"></textarea></td><td class='contentDetails'><textarea id='valText'  onkeydown='onKey(event)' placeholder=\"Enter a description...\"></textarea>" + attachButton + "</td>" +
+//             "<td class = 'contentAction'><span class='deleteBtn' onclick='deleteItem(this)' title='delete me'></span></td>";
+//     }
 
-    var data = {
-        name: row.firstChild.firstChild.value,
-        value: row.firstChild.nextSibling.firstChild.value
-    };
+//     var table = document.getElementById('notes');
+//     table.lastChild.appendChild(row);
+//     row.isNew = !item || isNew;
 
-    if (row.isNew) {
-        delete row.isNew;
-        xhrPost(REST_DATA, data, function(item) {
-            row.setAttribute('data-id', item.id);
-            callback && callback();
-        }, function(err) {
-            console.error(err);
-        });
-    } else {
-        data.id = row.getAttribute('data-id');
-        xhrPut(REST_DATA, data, function() {
-            console.log('updated: ', data);
-        }, function(err) {
-            console.error(err);
-        });
-    }
-}
+//     if (row.isNew) {
+//         var textarea = row.firstChild.firstChild;
+//         textarea.focus();
+//     }
 
-function toggleServiceInfo() {
-    var node = document.getElementById('vcapservices');
-    node.style.display = node.style.display == 'none' ? '' : 'none';
-}
+// }
 
-function toggleAppInfo() {
-    var node = document.getElementById('appinfo');
-    node.style.display = node.style.display == 'none' ? '' : 'none';
-}
+// function deleteItem(deleteBtnNode) {
+//     var row = deleteBtnNode.parentNode.parentNode;
+//     var attribId = row.getAttribute('data-id');
+//     if (attribId) {
+//         xhrDelete(REST_DATA + '?id=' + row.getAttribute('data-id'), function() {
+//             row.parentNode.removeChild(row);
+//         }, function(err) {
+//             console.error(err);
+//         });
+//     } else if (attribId == null) {
+//         row.parentNode.removeChild(row);
+//     }
+// }
+
+// function onKey(evt) {
+
+//     if (evt.keyCode == KEY_ENTER && !evt.shiftKey) {
+
+//         evt.stopPropagation();
+//         evt.preventDefault();
+//         var nameV, valueV;
+//         var row;
+
+//         if (evt.target.id == "nameText") {
+//             row = evt.target.parentNode.parentNode;
+//             nameV = evt.target.value;
+//             valueV = row.firstChild.nextSibling.firstChild.value;
+
+//         } else {
+//             row = evt.target.parentNode.parentNode;
+//             nameV = row.firstChild.firstChild.value;
+//             valueV = evt.target.value;
+//         }
+
+//         var data = {
+//             name: nameV,
+//             value: valueV
+//         };
+
+//         if (row.isNew) {
+//             delete row.isNew;
+//             xhrPost(REST_DATA, data, function(item) {
+//                 row.setAttribute('data-id', item.id);
+//             }, function(err) {
+//                 console.error(err);
+//             });
+//         } else {
+//             data.id = row.getAttribute('data-id');
+//             xhrPut(REST_DATA, data, function() {
+//                 console.log('updated: ', data);
+//             }, function(err) {
+//                 console.error(err);
+//             });
+//         }
 
 
-function showLoadingMessage() {
-    document.getElementById('loadingImage').innerHTML = "Loading data " + "<img height=\"100\" width=\"100\" src=\"images/loading.gif\"></img>";
-}
+//         if (row.nextSibling) {
+//             row.nextSibling.firstChild.firstChild.focus();
+//         } else {
+//             addItem();
+//         }
+//     }
+// }
 
-function stopLoadingMessage() {
-    document.getElementById('loadingImage').innerHTML = "";
-}
+// function saveChange(contentNode, callback) {
+//     var row = contentNode.parentNode.parentNode;
 
-showLoadingMessage();
-//updateServiceInfo();
-loadItems();
+//     var data = {
+//         name: row.firstChild.firstChild.value,
+//         value: row.firstChild.nextSibling.firstChild.value
+//     };
+
+//     if (row.isNew) {
+//         delete row.isNew;
+//         xhrPost(REST_DATA, data, function(item) {
+//             row.setAttribute('data-id', item.id);
+//             callback && callback();
+//         }, function(err) {
+//             console.error(err);
+//         });
+//     } else {
+//         data.id = row.getAttribute('data-id');
+//         xhrPut(REST_DATA, data, function() {
+//             console.log('updated: ', data);
+//         }, function(err) {
+//             console.error(err);
+//         });
+//     }
+// }
+
+// function toggleServiceInfo() {
+//     var node = document.getElementById('vcapservices');
+//     node.style.display = node.style.display == 'none' ? '' : 'none';
+// }
+
+// function toggleAppInfo() {
+//     var node = document.getElementById('appinfo');
+//     node.style.display = node.style.display == 'none' ? '' : 'none';
+// }
+
+
+// function showLoadingMessage() {
+//     document.getElementById('loadingImage').innerHTML = "Loading data " + "<img height=\"100\" width=\"100\" src=\"images/loading.gif\"></img>";
+// }
+
+// function stopLoadingMessage() {
+//     document.getElementById('loadingImage').innerHTML = "";
+// }
+
+// showLoadingMessage();
+// //updateServiceInfo();
+// loadItems();

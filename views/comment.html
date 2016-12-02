@@ -1,0 +1,53 @@
+<section style="margin:10px;">
+    <div class="container-fluid">
+
+        <ul class="list-group">
+            {{#each comments}}
+            <li data-id="{{id}}" class="list-group-item">
+
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        {{commenttext}}
+                    </div>
+                    <div class="panel-footer">
+                        <div class="panel panel-default" id="keywords-{{id}}">
+                            <div class="panel-body">
+                                <div class="container-fluid">
+                                    <span class="text-muted"><strong>language:</strong></span>
+                                    
+                                    <span class="label label-default">{{metric.language}}</span>
+            
+                                </div>
+                                
+                                <div class="container-fluid">
+                                    <span class="text-muted"><strong>keywords:</strong></span>
+                                    {{#each metric.keywords}}
+                                        <span class="label label-info">{{text}}</span>
+                                    {{/each}}
+                                </div>
+
+                                <div class="container-fluid">
+                                    <span class="text-muted"><strong>labels:</strong></span>
+                                    {{#each metric.taxonomy}}
+                                        <span class="label label-success">{{label}}</span>
+                                    {{/each}}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin:0 0 5px 0"><span class="label label-primary">{{username}}</span> <span>{{dateFormat time}}</span></div>
+
+                        <div class="btn-group" role="group" aria-label="Edit">
+                            <button type="button" class="btn btn-default btn-xs" onclick="deleteComment('{{id}}');">Delete</button>
+
+                            <button type="button" class="btn btn-default btn-xs" onclick="analyzeComment('{{id}}');">Analyize</button>
+                        </div>
+                    </div>
+                </div>
+
+            </li>
+            {{/each}}
+        </ul>
+
+    </div>
+</section>

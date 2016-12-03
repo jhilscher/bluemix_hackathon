@@ -88,7 +88,7 @@ exports.getComments = function(request, response){
             var i = 0;
             console.log('total # of docs -> ' + len);
             
-
+            if (len > 0) {
             body.rows.forEach(function(document) {
 
                 db.get(document.id, {
@@ -134,7 +134,11 @@ exports.getComments = function(request, response){
                 });
 
             });
-            
+            } else {
+                response.render('comment.html',  { 
+                                     layout: '',
+                                     comments: [] });
+            }
 
         } else {
             console.log(err);
